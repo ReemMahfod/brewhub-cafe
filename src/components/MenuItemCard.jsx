@@ -22,7 +22,7 @@ export default function MenuItemCard({ item, action, onEdit, onDelete }) {
           </span>
         </div>
         {(action || onEdit || onDelete) && (
-          <div className="mt-auto flex items-center justify-between gap-3 pt-4">
+          <div className="mt-auto flex items-center justify-between gap-4 pt-5">
             {action ? <div>{action}</div> : <span />}
             {(onEdit || onDelete) && (
               <RowActions onEdit={onEdit} onDelete={onDelete} className="shrink-0" />

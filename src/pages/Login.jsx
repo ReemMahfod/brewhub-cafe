@@ -89,7 +89,7 @@ export default function Login() {
             className="mt-1.5 h-11 w-full rounded-xl border border-sand bg-warm px-4 text-sm outline-none focus:border-amber"
           />
 
-          <button className="mt-6 h-12 w-full rounded-full bg-coffee text-sm font-semibold text-cream transition hover:bg-coffee-deep">
+          <button type="submit" className="btn-coffee mt-6 w-full">
             Enter staff dashboard
           </button>
 

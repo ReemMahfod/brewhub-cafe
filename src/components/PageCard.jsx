@@ -7,7 +7,7 @@ export default function PageCard({ title, subtitle, actions, children }) {
             {title && <h2 className="text-lg font-bold text-ink">{title}</h2>}
             {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
           </div>
-          {actions && <div className="flex items-center gap-3">{actions}</div>}
+          {actions && <div className="flex flex-wrap items-center gap-4">{actions}</div>}
         </div>
       )}
       <div className="p-6">{children}</div>

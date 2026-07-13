@@ -17,11 +17,11 @@ function DeleteIcon() {
 }
 
 const btnBase =
-  'inline-flex h-8 w-8 items-center justify-center rounded-lg transition focus:outline-none focus:ring-2 focus:ring-amber/40';
+  'inline-flex h-9 w-9 items-center justify-center rounded-lg transition focus:outline-none focus:ring-2 focus:ring-amber/40';
 
 export default function RowActions({ onEdit, onDelete, editLabel = 'Edit', deleteLabel = 'Delete', className = '' }) {
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
+    <div className={`flex items-center gap-2 ${className}`}>
       {onEdit && (
         <button
           type="button"

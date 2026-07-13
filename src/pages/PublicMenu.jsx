@@ -76,8 +76,8 @@ export default function PublicMenu() {
                   <button
                     type="button"
                     onClick={function () { addDrink(m); }}
-                    className={'w-full rounded-full py-2.5 text-sm font-semibold transition ' + (
-                      addedId === m.id ? 'bg-emerald-500 text-white' : 'bg-coffee text-cream hover:bg-coffee-deep'
+                    className={'btn w-full ' + (
+                      addedId === m.id ? 'bg-emerald-500 text-white' : 'btn-coffee'
                     )}
                   >
                     {addedId === m.id ? 'Added ✓' : 'Add drink'}

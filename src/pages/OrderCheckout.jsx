@@ -79,11 +79,11 @@ export default function OrderCheckout() {
             <p className="mt-2"><strong>Items:</strong> {done.items.join(', ')}</p>
           </div>
 
-          <div className="mt-6 flex justify-center gap-3">
-            <Link to="/menu" className="rounded-lg bg-amber px-4 py-2 text-sm font-semibold text-white">
+          <div className="mt-6 flex flex-wrap justify-center gap-4">
+            <Link to="/menu" className="btn-amber">
               Order more
             </Link>
-            <Link to="/" className="rounded-lg border border-sand px-4 py-2 text-sm font-semibold text-coffee">
+            <Link to="/" className="btn-outline-muted">
               Home
             </Link>
           </div>
@@ -117,15 +117,15 @@ export default function OrderCheckout() {
                         <p className="font-medium">{item.name}</p>
                         <p className="text-sm text-muted">${item.price.toFixed(2)}</p>
                       </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <button type="button" onClick={function () { cart.updateQty(item.id, item.qty - 1); }} className="rounded border border-sand px-2 py-1">
+                      <div className="flex flex-wrap items-center gap-3 text-sm">
+                        <button type="button" onClick={function () { cart.updateQty(item.id, item.qty - 1); }} className="rounded-lg border border-sand px-3 py-1.5 font-medium hover:bg-warm">
                           Less
                         </button>
                         <span className="min-w-[3rem] text-center font-semibold">Qty {item.qty}</span>
-                        <button type="button" onClick={function () { cart.updateQty(item.id, item.qty + 1); }} className="rounded border border-sand px-2 py-1">
+                        <button type="button" onClick={function () { cart.updateQty(item.id, item.qty + 1); }} className="rounded-lg border border-sand px-3 py-1.5 font-medium hover:bg-warm">
                           More
                         </button>
-                        <button type="button" onClick={function () { cart.removeItem(item.id); }} className="text-rose-500">
+                        <button type="button" onClick={function () { cart.removeItem(item.id); }} className="px-2 py-1.5 font-medium text-rose-500 hover:text-rose-600">
                           Remove
                         </button>
                       </div>
@@ -166,11 +166,11 @@ export default function OrderCheckout() {
 
             {err && <p className="text-sm text-rose-600">{err}</p>}
 
-            <div className="flex gap-3">
-              <button type="submit" className="rounded-lg bg-amber px-5 py-2 text-sm font-semibold text-white">
+            <div className="flex flex-wrap gap-4">
+              <button type="submit" className="btn-amber">
                 Send order
               </button>
-              <button type="button" onClick={function () { nav('/menu'); }} className="rounded-lg border border-sand px-5 py-2 text-sm">
+              <button type="button" onClick={function () { nav('/menu'); }} className="btn-outline-muted">
                 Add more
               </button>
             </div>

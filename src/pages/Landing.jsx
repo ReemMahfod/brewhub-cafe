@@ -65,11 +65,11 @@ export default function Landing() {
             <p className="mt-4 max-w-md text-lg leading-relaxed text-muted">
               Sit down, order from your phone, and we will bring your coffee to your table.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/menu" className="rounded-full bg-amber px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-amber-soft">
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link to="/menu" className="btn-amber">
                 Order now
               </Link>
-              <Link to="/branches" className="rounded-full border border-sand bg-white px-6 py-3 text-sm font-semibold text-coffee transition hover:bg-cream">
+              <Link to="/branches" className="btn-outline">
                 Find a branch
               </Link>
             </div>
@@ -178,7 +178,7 @@ export default function Landing() {
           <p className="max-w-md text-cream/70">
             Open the menu, choose your drink, and enter your table number.
           </p>
-          <Link to="/menu" className="mt-2 rounded-full bg-amber px-8 py-3 text-sm font-semibold text-white shadow-md hover:bg-amber-soft">
+          <Link to="/menu" className="btn-amber mt-2">
             Start ordering
           </Link>
         </div>

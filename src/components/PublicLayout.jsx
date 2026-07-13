@@ -36,10 +36,10 @@ export default function PublicLayout({ children }) {
               <NavLink to="/branches" className={navLinkClass}>Branches</NavLink>
             </nav>
 
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-3 sm:gap-4">
               <Link
                 to="/order"
-                className="relative rounded-full bg-amber px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-soft sm:px-4 sm:text-sm"
+                className="btn-amber relative px-5 py-2.5 sm:px-6"
               >
                 Order here
                 {count > 0 && (
@@ -51,7 +51,7 @@ export default function PublicLayout({ children }) {
 
               <Link
                 to="/login"
-                className="flex items-center gap-1.5 rounded-full border-2 border-coffee bg-coffee px-3 py-2 text-xs font-semibold text-cream shadow-sm transition hover:bg-coffee-deep sm:gap-2 sm:px-4 sm:text-sm"
+                className="btn-coffee px-5 py-2.5 sm:px-6"
               >
                 <StaffIcon />
                 <span>Staff login</span>
@@ -80,7 +80,7 @@ export default function PublicLayout({ children }) {
             </div>
             <Link
               to="/login"
-              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-amber px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-soft"
+              className="btn-amber shrink-0"
             >
               <StaffIcon />
               Staff login →

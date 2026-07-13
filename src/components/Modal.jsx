@@ -26,7 +26,7 @@ export default function Modal({ open, onClose, title, children, footer }) {
           </button>
         </div>
         <div className="mt-5">{children}</div>
-        {footer && <div className="mt-6 flex justify-end gap-3">{footer}</div>}
+        {footer && <div className="mt-8 flex flex-wrap justify-end gap-4">{footer}</div>}
       </div>
     </div>
   );

@@ -75,13 +75,13 @@ export default function Orders() {
               let actionBtn = null;
               if (nextStep[o.status]) {
                 actionBtn = (
-                  <Button variant="ghost" className="h-8 px-3 text-xs" onClick={function () { updateOrderStatus(o.id, nextStep[o.status]); }}>
+                  <Button variant="ghost" size="sm" onClick={function () { updateOrderStatus(o.id, nextStep[o.status]); }}>
                     Mark {nextStep[o.status]}
                   </Button>
                 );
               } else if (o.status !== 'cancelled') {
                 actionBtn = (
-                  <Button variant="danger" className="h-8 px-3 text-xs" onClick={function () { updateOrderStatus(o.id, 'cancelled'); }}>
+                  <Button variant="danger" size="sm" onClick={function () { updateOrderStatus(o.id, 'cancelled'); }}>
                     Cancel
                   </Button>
                 );

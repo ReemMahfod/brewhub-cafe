@@ -6,8 +6,14 @@ const variants = {
   danger: 'text-rose-600 hover:bg-rose-50',
 };
 
+const sizes = {
+  md: 'min-h-[42px] px-6 py-2.5 text-sm',
+  sm: 'min-h-9 px-4 py-2 text-xs',
+};
+
 export default function Button({
   variant = 'primary',
+  size = 'md',
   className = '',
   type = 'button',
   children,
@@ -16,7 +22,7 @@ export default function Button({
   return (
     <button
       type={type}
-      className={`inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold transition disabled:opacity-50 ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full font-semibold leading-tight transition disabled:opacity-50 ${sizes[size]} ${variants[variant]} ${className}`}
       {...props}
     >
       {children}

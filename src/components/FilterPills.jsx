@@ -1,6 +1,6 @@
 export default function FilterPills({ items, value, onChange, activeClass = 'bg-coffee text-cream' }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-3">
       {items.map((item) => {
         const id = typeof item === 'string' ? item : item.id;
         const label = typeof item === 'string' ? item : item.label;
@@ -11,7 +11,7 @@ export default function FilterPills({ items, value, onChange, activeClass = 'bg-
             key={id}
             type="button"
             onClick={() => onChange(id)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition-colors ${
+            className={`rounded-full px-5 py-2 text-sm font-medium capitalize transition-colors ${
               isActive ? activeClass : 'bg-warm text-muted hover:bg-sand'
             }`}
           >

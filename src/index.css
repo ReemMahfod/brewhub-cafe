@@ -31,4 +31,28 @@ body {
   .surface-card {
     @apply rounded-2xl border border-sand bg-white shadow-card;
   }
+
+  .btn {
+    @apply inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold leading-tight transition disabled:opacity-50;
+  }
+
+  .btn-amber {
+    @apply btn bg-amber text-white shadow-sm hover:bg-amber-soft;
+  }
+
+  .btn-coffee {
+    @apply btn bg-coffee text-cream shadow-sm hover:bg-coffee-deep;
+  }
+
+  .btn-outline {
+    @apply btn border border-sand bg-white text-coffee hover:bg-cream;
+  }
+
+  .btn-outline-muted {
+    @apply btn border border-sand bg-white text-muted hover:bg-warm;
+  }
+
+  .btn-sm {
+    @apply min-h-9 px-4 py-2 text-xs;
+  }
 }
