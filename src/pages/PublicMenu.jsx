@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { menu } from '../data/mock.js';
 import { useCart } from '../context/CartContext.jsx';
+import { canCustomize } from '../utils/drinkCustom.js';
 import PublicLayout from '../components/PublicLayout.jsx';
 import FilterPills from '../components/FilterPills.jsx';
 import SearchInput from '../components/SearchInput.jsx';
 import MenuItemCard from '../components/MenuItemCard.jsx';
+import CustomizeDrinkModal from '../components/CustomizeDrinkModal.jsx';
 import Button from '../components/Button.jsx';
 
 const cats = ['All', 'Hot', 'Iced', 'Bakery'];
@@ -28,15 +30,31 @@ export default function PublicMenu() {
   const [cat, setCat] = useState('All');
   const [search, setSearch] = useState('');
   const [addedId, setAddedId] = useState(null);
+  const [pick, setPick] = useState(null);
+  const [showCustom, setShowCustom] = useState(false);
 
   const list = filterList(menu, cat, search);
 
-  function addDrink(item) {
-    cart.addItem(item);
-    setAddedId(item.id);
+  function flashAdded(id) {
+    setAddedId(id);
     setTimeout(function () {
       setAddedId(null);
     }, 1200);
+  }
+
+  function addSimple(item) {
+    cart.addItem(item);
+    flashAdded(item.id);
+  }
+
+  function openCustom(item) {
+    setPick(item);
+    setShowCustom(true);
+  }
+
+  function addCustom(drink, custom, price) {
+    cart.addItem(drink, custom, price);
+    flashAdded(drink.id);
   }
 
   return (
@@ -46,7 +64,7 @@ export default function PublicMenu() {
           <div className="max-w-2xl">
             <h1 className="text-4xl font-bold text-ink">Our menu</h1>
             <p className="mt-2 text-lg text-muted">
-              Pick your drink and we will bring it to your table.
+              Customize your drink — size, milk, sweetness, and extras.
             </p>
           </div>
           {cart.count > 0 && (
@@ -68,6 +86,7 @@ export default function PublicMenu() {
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {list.map(function (m) {
+            const isDrink = canCustomize(m);
             return (
               <MenuItemCard
                 key={m.id}
@@ -75,12 +94,15 @@ export default function PublicMenu() {
                 action={
                   <button
                     type="button"
-                    onClick={function () { addDrink(m); }}
+                    onClick={function () {
+                      if (isDrink) openCustom(m);
+                      else addSimple(m);
+                    }}
                     className={'btn w-full ' + (
                       addedId === m.id ? 'bg-emerald-500 text-white' : 'btn-coffee'
                     )}
                   >
-                    {addedId === m.id ? 'Added ✓' : 'Add drink'}
+                    {addedId === m.id ? 'Added ✓' : (isDrink ? 'Customize' : 'Add item')}
                   </button>
                 }
               />
@@ -92,6 +114,14 @@ export default function PublicMenu() {
           <p className="py-16 text-center text-muted">No items found. Try another category.</p>
         )}
       </div>
+
+      <CustomizeDrinkModal
+        key={pick ? pick.id : 'none'}
+        drink={pick}
+        open={showCustom}
+        onClose={function () { setShowCustom(false); setPick(null); }}
+        onAdd={addCustom}
+      />
     </PublicLayout>
   );
 }

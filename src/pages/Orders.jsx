@@ -98,7 +98,7 @@ export default function Orders() {
                     </span>
                   </td>
                   <td className="py-3 text-ink">{o.customer}</td>
-                  <td className="max-w-[180px] truncate py-3 text-muted">{o.items.join(', ')}</td>
+                  <td className="max-w-[180px] truncate py-3 text-muted">{(o.items || []).join(', ')}</td>
                   <td className="py-3 text-muted">{o.branch}</td>
                   <td className="py-3 font-medium text-ink">${o.total.toFixed(2)}</td>
                   <td className="py-3 text-muted">{o.time}</td>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { branches } from '../data/mock.js';
 import { useCart } from '../context/CartContext.jsx';
 import { useOrders, getReadyLabel } from '../context/OrdersContext.jsx';
+import { getCustomSummary } from '../utils/drinkCustom.js';
 import PublicLayout from '../components/PublicLayout.jsx';
 
 function getOpenBranches() {
@@ -16,7 +17,7 @@ function getOpenBranches() {
 export default function OrderCheckout() {
   const nav = useNavigate();
   const cart = useCart();
-  const { placeOrder } = useOrders();
+  const { orders, placeOrder } = useOrders();
   const openBranches = getOpenBranches();
 
   const [name, setName] = useState('');
@@ -46,7 +47,14 @@ export default function OrderCheckout() {
     const cartCopy = [];
     for (let i = 0; i < cart.items.length; i++) {
       const it = cart.items[i];
-      cartCopy.push({ id: it.id, name: it.name, price: it.price, qty: it.qty });
+      cartCopy.push({
+        cartLineId: it.cartLineId,
+        id: it.id,
+        name: it.displayName || it.name,
+        price: it.price,
+        qty: it.qty,
+        custom: it.custom,
+      });
     }
 
     const order = placeOrder({
@@ -69,6 +77,7 @@ export default function OrderCheckout() {
           <p className="mt-2 text-muted">
             Thanks {done.customer}. We will bring your order to table {done.tableNumber}.
           </p>
+          <p className="mt-1 text-sm text-muted">Pay at your table when the order arrives.</p>
 
           <div className="mt-6 rounded-xl border border-sand bg-white p-5 text-left text-sm">
             <p><strong>Order:</strong> #{done.id}</p>
@@ -99,11 +108,30 @@ export default function OrderCheckout() {
         <p className="mt-2 text-muted">Enter your table number and we will bring the drinks.</p>
 
         {cart.items.length === 0 ? (
-          <div className="mt-10 rounded-xl border border-dashed border-sand bg-white p-10 text-center">
-            <p className="text-muted">Your cart is empty.</p>
-            <Link to="/menu" className="mt-3 inline-block text-sm font-semibold text-amber">
-              Go to menu
-            </Link>
+          <div className="mt-10">
+            <div className="rounded-xl border border-dashed border-sand bg-white p-10 text-center">
+              <p className="text-muted">Your cart is empty.</p>
+              <Link to="/menu" className="mt-3 inline-block text-sm font-semibold text-amber">
+                Go to menu
+              </Link>
+            </div>
+
+            {orders.length > 0 && (
+              <div className="mt-6 rounded-xl border border-sand bg-white p-5">
+                <h2 className="font-bold text-ink">Your recent orders</h2>
+                <ul className="mt-3 space-y-3">
+                  {orders.slice(0, 5).map(function (o) {
+                    return (
+                      <li key={o.id} className="border-b border-sand pb-3 text-sm last:border-0 last:pb-0">
+                        <p className="font-medium text-ink">Order #{o.id} · Table {o.tableNumber}</p>
+                        <p className="mt-1 text-muted">{o.items.join(', ')}</p>
+                        <p className="mt-1 text-amber">${o.total.toFixed(2)} · {getReadyLabel(o)}</p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
           </div>
         ) : (
           <form onSubmit={submit} className="mt-8 space-y-6">
@@ -112,20 +140,23 @@ export default function OrderCheckout() {
               <ul className="mt-3 space-y-3">
                 {cart.items.map(function (item) {
                   return (
-                    <li key={item.id} className="flex items-center justify-between gap-3 border-b border-sand pb-3 last:border-0">
-                      <div>
-                        <p className="font-medium">{item.name}</p>
+                    <li key={item.cartLineId} className="flex items-center justify-between gap-3 border-b border-sand pb-3 last:border-0">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium">{item.displayName || item.name}</p>
+                        {item.custom && (
+                          <p className="mt-0.5 text-xs text-muted">{getCustomSummary(item.custom)}</p>
+                        )}
                         <p className="text-sm text-muted">${item.price.toFixed(2)}</p>
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-sm">
-                        <button type="button" onClick={function () { cart.updateQty(item.id, item.qty - 1); }} className="rounded-lg border border-sand px-3 py-1.5 font-medium hover:bg-warm">
+                        <button type="button" onClick={function () { cart.updateQty(item.cartLineId, item.qty - 1); }} className="rounded-lg border border-sand px-3 py-1.5 font-medium hover:bg-warm">
                           Less
                         </button>
                         <span className="min-w-[3rem] text-center font-semibold">Qty {item.qty}</span>
-                        <button type="button" onClick={function () { cart.updateQty(item.id, item.qty + 1); }} className="rounded-lg border border-sand px-3 py-1.5 font-medium hover:bg-warm">
+                        <button type="button" onClick={function () { cart.updateQty(item.cartLineId, item.qty + 1); }} className="rounded-lg border border-sand px-3 py-1.5 font-medium hover:bg-warm">
                           More
                         </button>
-                        <button type="button" onClick={function () { cart.removeItem(item.id); }} className="px-2 py-1.5 font-medium text-rose-500 hover:text-rose-600">
+                        <button type="button" onClick={function () { cart.removeItem(item.cartLineId); }} className="px-2 py-1.5 font-medium text-rose-500 hover:text-rose-600">
                           Remove
                         </button>
                       </div>
@@ -134,6 +165,7 @@ export default function OrderCheckout() {
                 })}
               </ul>
               <p className="mt-4 text-right font-bold text-amber">Total: ${cart.total.toFixed(2)}</p>
+              <p className="mt-1 text-right text-xs text-muted">Payment at table</p>
             </div>
 
             <div className="rounded-xl border border-sand bg-white p-5 space-y-4">

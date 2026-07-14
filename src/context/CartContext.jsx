@@ -1,15 +1,40 @@
 import { createContext, useContext, useState } from 'react';
+import { getLineId, getDisplayName } from '../utils/drinkCustom.js';
 
 const CartCtx = createContext(null);
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
 
-  function addItem(item) {
+  function addItem(item, custom, finalPrice) {
+    let cartLineId = String(item.id) + '-plain';
+    let displayName = item.name;
+    let price = item.price;
+
+    if (custom) {
+      cartLineId = getLineId(item.id, custom);
+      displayName = getDisplayName(item.name, custom);
+      price = finalPrice;
+    }
+
+    const line = {
+      cartLineId: cartLineId,
+      menuId: item.id,
+      id: item.id,
+      name: item.name,
+      displayName: displayName,
+      price: price,
+      basePrice: item.price,
+      custom: custom || null,
+      image: item.image,
+      category: item.category,
+      qty: 1,
+    };
+
     setItems(function (old) {
       let found = null;
       for (let i = 0; i < old.length; i++) {
-        if (old[i].id === item.id) {
+        if (old[i].cartLineId === line.cartLineId) {
           found = old[i];
           break;
         }
@@ -18,7 +43,7 @@ export function CartProvider({ children }) {
       if (found) {
         const next = [];
         for (let i = 0; i < old.length; i++) {
-          if (old[i].id === item.id) {
+          if (old[i].cartLineId === line.cartLineId) {
             next.push({ ...old[i], qty: old[i].qty + 1 });
           } else {
             next.push(old[i]);
@@ -27,29 +52,29 @@ export function CartProvider({ children }) {
         return next;
       }
 
-      return [...old, { ...item, qty: 1 }];
+      return [...old, line];
     });
   }
 
-  function removeItem(id) {
+  function removeItem(cartLineId) {
     setItems(function (old) {
       const next = [];
       for (let i = 0; i < old.length; i++) {
-        if (old[i].id !== id) next.push(old[i]);
+        if (old[i].cartLineId !== cartLineId) next.push(old[i]);
       }
       return next;
     });
   }
 
-  function updateQty(id, qty) {
+  function updateQty(cartLineId, qty) {
     if (qty < 1) {
-      removeItem(id);
+      removeItem(cartLineId);
       return;
     }
     setItems(function (old) {
       const next = [];
       for (let i = 0; i < old.length; i++) {
-        if (old[i].id === id) {
+        if (old[i].cartLineId === cartLineId) {
           next.push({ ...old[i], qty: qty });
         } else {
           next.push(old[i]);

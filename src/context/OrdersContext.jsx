@@ -36,7 +36,12 @@ function getReadyInfo(placedAt, mins) {
 function loadOrders() {
   const saved = localStorage.getItem(SAVE_KEY);
   if (saved) {
-    return JSON.parse(saved);
+    try {
+      const list = JSON.parse(saved);
+      if (list && list.length > 0) return list;
+    } catch (e) {
+      // bad data in storage, load defaults below
+    }
   }
 
   const list = [];
@@ -84,8 +89,9 @@ export function OrdersProvider({ children }) {
     const names = [];
     for (let i = 0; i < data.cartItems.length; i++) {
       const c = data.cartItems[i];
+      const label = c.name;
       for (let j = 0; j < c.qty; j++) {
-        names.push(c.name);
+        names.push(label);
       }
     }
 
@@ -94,33 +100,37 @@ export function OrdersProvider({ children }) {
       total = total + data.cartItems[i].price * data.cartItems[i].qty;
     }
 
-    let maxId = 0;
-    for (let i = 0; i < orders.length; i++) {
-      if (orders[i].id > maxId) maxId = orders[i].id;
-    }
-
     let wait = parseInt(data.readyInMinutes, 10);
     if (isNaN(wait) || wait < 5) wait = 5;
 
-    const order = {
-      id: maxId + 1,
-      customer: data.customer.trim(),
-      tableNumber: String(data.tableNumber).trim(),
-      items: names,
-      cartItems: data.cartItems,
-      total: Math.round(total * 100) / 100,
-      status: 'new',
-      branch: data.branch,
-      time: showTime(placedAt),
-      placedAt: placedAt.toISOString(),
-      ...getReadyInfo(placedAt, wait),
-    };
+    let newOrder = null;
 
     setOrders(function (old) {
-      return [order, ...old];
+      let maxId = 0;
+      for (let i = 0; i < old.length; i++) {
+        if (old[i].id > maxId) maxId = old[i].id;
+      }
+
+      newOrder = {
+        id: maxId + 1,
+        customer: data.customer.trim(),
+        tableNumber: String(data.tableNumber).trim(),
+        items: names,
+        cartItems: data.cartItems,
+        total: Math.round(total * 100) / 100,
+        status: 'new',
+        branch: data.branch,
+        time: showTime(placedAt),
+        placedAt: placedAt.toISOString(),
+        ...getReadyInfo(placedAt, wait),
+      };
+
+      const next = [newOrder, ...old];
+      localStorage.setItem(SAVE_KEY, JSON.stringify(next));
+      return next;
     });
 
-    return order;
+    return newOrder;
   }
 
   function updateStatus(id, status) {
@@ -133,6 +143,7 @@ export function OrdersProvider({ children }) {
           next.push(old[i]);
         }
       }
+      localStorage.setItem(SAVE_KEY, JSON.stringify(next));
       return next;
     });
   }

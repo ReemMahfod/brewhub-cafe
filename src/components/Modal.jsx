@@ -1,5 +1,7 @@
-export default function Modal({ open, onClose, title, children, footer }) {
+export default function Modal({ open, onClose, title, children, footer, wide }) {
   if (!open) return null;
+
+  const boxCls = wide ? 'max-w-lg' : 'max-w-md';
 
   return (
     <div
@@ -8,7 +10,7 @@ export default function Modal({ open, onClose, title, children, footer }) {
       role="presentation"
     >
       <div
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+        className={'max-h-[90vh] w-full overflow-y-auto rounded-2xl bg-white p-6 shadow-xl ' + boxCls}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
