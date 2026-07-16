@@ -33,6 +33,8 @@ export default function PublicLayout({ children }) {
             <nav className="hidden items-center gap-8 lg:flex">
               <NavLink to="/" end className={navLinkClass}>Home</NavLink>
               <NavLink to="/menu" className={navLinkClass}>Menu</NavLink>
+              <NavLink to="/order" className={navLinkClass}>Order</NavLink>
+              <NavLink to="/track" className={navLinkClass}>Track</NavLink>
               <NavLink to="/branches" className={navLinkClass}>Branches</NavLink>
             </nav>
 
@@ -59,9 +61,11 @@ export default function PublicLayout({ children }) {
             </div>
           </div>
 
-          <nav className="mt-3 flex items-center justify-center gap-6 border-t border-sand/60 pt-3 lg:hidden">
+          <nav className="mt-3 flex flex-wrap items-center justify-center gap-4 border-t border-sand/60 pt-3 sm:gap-6 lg:hidden">
             <NavLink to="/" end className={navLinkClass}>Home</NavLink>
             <NavLink to="/menu" className={navLinkClass}>Menu</NavLink>
+            <NavLink to="/order" className={navLinkClass}>Order</NavLink>
+            <NavLink to="/track" className={navLinkClass}>Track</NavLink>
             <NavLink to="/branches" className={navLinkClass}>Branches</NavLink>
           </nav>
         </div>

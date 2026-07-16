@@ -27,19 +27,16 @@ export const extraAddons = [
 ];
 
 export function defaultCustom() {
-  return {
-    size: 'Medium',
-    milk: 'Regular',
-    sweetness: 'Regular',
-    extras: [],
-  };
+  return { size: 'Medium', milk: 'Regular', sweetness: 'Regular', extras: [] };
 }
 
-function findExtra(list, id) {
-  for (let i = 0; i < list.length; i++) {
-    if (list[i].id === id) return list[i].extra;
-  }
-  return 0;
+function findOpt(list, id) {
+  return list.find(function (o) { return o.id === id; }) || null;
+}
+
+function extraOf(list, id) {
+  const o = findOpt(list, id);
+  return o ? o.extra : 0;
 }
 
 export function canCustomize(item) {
@@ -48,53 +45,68 @@ export function canCustomize(item) {
 
 export function getCustomPrice(basePrice, custom) {
   let total = basePrice;
-  total = total + findExtra(sizes, custom.size);
-  total = total + findExtra(milkTypes, custom.milk);
-  total = total + findExtra(sweetnessLevels, custom.sweetness);
-
-  for (let i = 0; i < custom.extras.length; i++) {
-    total = total + findExtra(extraAddons, custom.extras[i]);
-  }
-
+  total += extraOf(sizes, custom.size);
+  total += extraOf(milkTypes, custom.milk);
+  total += extraOf(sweetnessLevels, custom.sweetness);
+  custom.extras.forEach(function (id) {
+    total += extraOf(extraAddons, id);
+  });
   return Math.round(total * 100) / 100;
 }
 
 export function getLineId(menuId, custom) {
-  const extras = custom.extras.slice().sort().join(',');
-  return menuId + '-' + custom.size + '-' + custom.milk + '-' + custom.sweetness + '-' + extras;
+  return menuId + '-' + custom.size + '-' + custom.milk + '-' + custom.sweetness + '-' + custom.extras.slice().sort().join(',');
 }
 
 export function getDisplayName(name, custom) {
-  let parts = [name];
   let details = custom.size;
-
-  if (custom.milk !== 'Regular') {
-    if (custom.milk === 'None') details = details + ', no milk';
-    else details = details + ', ' + custom.milk + ' milk';
-  }
-  if (custom.sweetness !== 'Regular') {
-    if (custom.sweetness === 'None') details = details + ', no sugar';
-    else details = details + ', ' + custom.sweetness.toLowerCase() + ' sugar';
-  }
-  for (let i = 0; i < custom.extras.length; i++) {
-    for (let j = 0; j < extraAddons.length; j++) {
-      if (extraAddons[j].id === custom.extras[i]) {
-        details = details + ', +' + extraAddons[j].label.toLowerCase();
-      }
-    }
-  }
-
-  return parts[0] + ' (' + details + ')';
+  if (custom.milk === 'None') details += ', no milk';
+  else if (custom.milk !== 'Regular') details += ', ' + custom.milk + ' milk';
+  if (custom.sweetness === 'None') details += ', no sugar';
+  else if (custom.sweetness !== 'Regular') details += ', ' + custom.sweetness.toLowerCase() + ' sugar';
+  custom.extras.forEach(function (id) {
+    const add = findOpt(extraAddons, id);
+    if (add) details += ', +' + add.label.toLowerCase();
+  });
+  return name + ' (' + details + ')';
 }
 
 export function getCustomSummary(custom) {
   const bits = [custom.size, custom.milk + ' milk', custom.sweetness + ' sugar'];
-  for (let i = 0; i < custom.extras.length; i++) {
-    for (let j = 0; j < extraAddons.length; j++) {
-      if (extraAddons[j].id === custom.extras[i]) {
-        bits.push(extraAddons[j].label);
-      }
-    }
-  }
+  custom.extras.forEach(function (id) {
+    const add = findOpt(extraAddons, id);
+    if (add) bits.push(add.label);
+  });
   return bits.join(' · ');
+}
+
+export function getPriceBreakdown(basePrice, custom) {
+  const lines = [{ label: 'Base drink', amount: basePrice }];
+  const size = findOpt(sizes, custom.size);
+  if (size && size.extra > 0) lines.push({ label: size.label + ' size', amount: size.extra });
+  const milk = findOpt(milkTypes, custom.milk);
+  if (milk && milk.extra > 0) lines.push({ label: milk.label, amount: milk.extra });
+  const sweet = findOpt(sweetnessLevels, custom.sweetness);
+  if (sweet && sweet.extra > 0) lines.push({ label: sweet.label, amount: sweet.extra });
+  custom.extras.forEach(function (id) {
+    const add = findOpt(extraAddons, id);
+    if (add) lines.push({ label: add.label, amount: add.extra });
+  });
+  return lines;
+}
+
+export function estimateWaitMinutes(cartItems) {
+  let mins = 8;
+  cartItems.forEach(function (item) {
+    const qty = item.qty || 1;
+    mins += (qty - 1) * 2;
+    if (item.custom) {
+      if (item.custom.size === 'Large') mins += 2 * qty;
+      if (item.custom.size === 'Medium') mins += 1 * qty;
+      mins += item.custom.extras.length * qty;
+    }
+  });
+  if (mins < 5) return 5;
+  if (mins > 25) return 25;
+  return mins;
 }

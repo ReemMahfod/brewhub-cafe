@@ -6,6 +6,7 @@ import Login from './pages/Login.jsx';
 import PublicMenu from './pages/PublicMenu.jsx';
 import PublicBranches from './pages/PublicBranches.jsx';
 import OrderCheckout from './pages/OrderCheckout.jsx';
+import TrackOrder from './pages/TrackOrder.jsx';
 import Overview from './pages/Overview.jsx';
 import Orders from './pages/Orders.jsx';
 import Menu from './pages/Menu.jsx';
@@ -20,6 +21,7 @@ export default function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/menu" element={<PublicMenu />} />
       <Route path="/order" element={<OrderCheckout />} />
+      <Route path="/track" element={<TrackOrder />} />
       <Route path="/branches" element={<PublicBranches />} />
       <Route path="/login" element={<Login />} />
 

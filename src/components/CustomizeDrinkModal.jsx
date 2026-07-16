@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Modal from './Modal.jsx';
 import Button from './Button.jsx';
+import OptionPills from './OptionPills.jsx';
 import {
   sizes,
   milkTypes,
@@ -9,33 +10,8 @@ import {
   defaultCustom,
   getCustomPrice,
   getDisplayName,
+  getPriceBreakdown,
 } from '../utils/drinkCustom.js';
-
-function OptionGroup({ label, options, value, onChange }) {
-  return (
-    <div>
-      <p className="mb-2 text-sm font-semibold text-ink">{label}</p>
-      <div className="flex flex-wrap gap-2">
-        {options.map(function (opt) {
-          const active = value === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={function () { onChange(opt.id); }}
-              className={'rounded-full px-4 py-2 text-sm font-medium transition ' + (
-                active ? 'bg-coffee text-cream' : 'bg-warm text-muted hover:bg-sand'
-              )}
-            >
-              {opt.label}
-              {opt.extra > 0 && <span className="ml-1 text-xs opacity-80">+${opt.extra.toFixed(2)}</span>}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 export default function CustomizeDrinkModal({ drink, open, onClose, onAdd }) {
   const [custom, setCustom] = useState(defaultCustom());
@@ -43,21 +19,18 @@ export default function CustomizeDrinkModal({ drink, open, onClose, onAdd }) {
   if (!drink) return null;
 
   const price = getCustomPrice(drink.price, custom);
+  const breakdown = getPriceBreakdown(drink.price, custom);
 
   function setField(key, val) {
     setCustom({ ...custom, [key]: val });
   }
 
   function toggleExtra(id) {
-    const list = custom.extras.slice();
-    let found = false;
-    const next = [];
-    for (let i = 0; i < list.length; i++) {
-      if (list[i] === id) found = true;
-      else next.push(list[i]);
-    }
-    if (!found) next.push(id);
-    setCustom({ ...custom, extras: next });
+    const has = custom.extras.indexOf(id) !== -1;
+    const extras = has
+      ? custom.extras.filter(function (x) { return x !== id; })
+      : custom.extras.concat([id]);
+    setCustom({ ...custom, extras: extras });
   }
 
   function handleAdd() {
@@ -93,9 +66,9 @@ export default function CustomizeDrinkModal({ drink, open, onClose, onAdd }) {
           </div>
         </div>
 
-        <OptionGroup label="Size" options={sizes} value={custom.size} onChange={function (v) { setField('size', v); }} />
-        <OptionGroup label="Milk" options={milkTypes} value={custom.milk} onChange={function (v) { setField('milk', v); }} />
-        <OptionGroup label="Sweetness" options={sweetnessLevels} value={custom.sweetness} onChange={function (v) { setField('sweetness', v); }} />
+        <OptionPills label="Size" options={sizes} value={custom.size} onChange={function (v) { setField('size', v); }} />
+        <OptionPills label="Milk" options={milkTypes} value={custom.milk} onChange={function (v) { setField('milk', v); }} />
+        <OptionPills label="Sweetness" options={sweetnessLevels} value={custom.sweetness} onChange={function (v) { setField('sweetness', v); }} />
 
         <div>
           <p className="mb-2 text-sm font-semibold text-ink">Extra add-ons</p>
@@ -122,7 +95,20 @@ export default function CustomizeDrinkModal({ drink, open, onClose, onAdd }) {
 
         <div className="rounded-xl border border-sand bg-cream px-4 py-3 text-sm">
           <p className="font-medium text-ink">{getDisplayName(drink.name, custom)}</p>
-          <p className="mt-1 text-lg font-bold text-amber">Total: ${price.toFixed(2)}</p>
+          <ul className="mt-3 space-y-1.5 border-t border-sand/80 pt-3">
+            {breakdown.map(function (line, i) {
+              return (
+                <li key={i} className="flex justify-between text-muted">
+                  <span>{line.label}</span>
+                  <span>${line.amount.toFixed(2)}</span>
+                </li>
+              );
+            })}
+          </ul>
+          <div className="mt-3 flex justify-between border-t border-sand/80 pt-3 text-base font-bold text-ink">
+            <span>Total</span>
+            <span className="text-amber">${price.toFixed(2)}</span>
+          </div>
         </div>
       </div>
     </Modal>

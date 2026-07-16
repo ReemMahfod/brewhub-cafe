@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { menu as startMenu, drinkImages } from '../data/mock.js';
+import { drinkImages } from '../data/mock.js';
+import { useMenu } from '../context/MenuContext.jsx';
+import { updateById, removeById, nextId } from '../utils/list.js';
 import PageCard from '../components/PageCard.jsx';
 import Modal from '../components/Modal.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
@@ -33,7 +35,7 @@ function filterMenu(list, cat, search) {
 }
 
 export default function Menu() {
-  const [items, setItems] = useState(startMenu);
+  const { items, setMenu } = useMenu();
   const [cat, setCat] = useState('All');
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -91,30 +93,18 @@ export default function Menu() {
     }
 
     if (editing) {
-      const next = [];
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].id === editId) {
-          next.push({
-            ...items[i],
-            name: name,
-            category: form.category,
-            price: price,
-            active: form.active,
-            image: form.image.trim() || defImg[form.category] || items[i].image,
-          });
-        } else {
-          next.push(items[i]);
-        }
-      }
-      setItems(next);
+      const current = items.find(function (m) { return m.id === editId; });
+      setMenu(updateById(items, editId, {
+        name: name,
+        category: form.category,
+        price: price,
+        active: form.active,
+        image: form.image.trim() || defImg[form.category] || (current && current.image),
+      }));
     } else {
-      let maxId = 0;
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].id > maxId) maxId = items[i].id;
-      }
-      setItems([
+      setMenu([
         {
-          id: maxId + 1,
+          id: nextId(items),
           name: name,
           category: form.category,
           price: price,
@@ -129,11 +119,7 @@ export default function Menu() {
 
   function doDelete() {
     if (!toDelete) return;
-    const next = [];
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].id !== toDelete.id) next.push(items[i]);
-    }
-    setItems(next);
+    setMenu(removeById(items, toDelete.id));
     setToDelete(null);
   }
 
@@ -141,7 +127,7 @@ export default function Menu() {
     <>
       <PageCard
         title="Menu"
-        subtitle={list.length + ' item(s)'}
+        subtitle={list.length + ' item(s) · sold out shows on customer menu'}
         actions={
           <>
             <SearchInput value={search} onChange={function (e) { setSearch(e.target.value); }} placeholder="Search menu…" className="w-48" />
@@ -157,6 +143,7 @@ export default function Menu() {
               <MenuItemCard
                 key={m.id}
                 item={m}
+                soldOut={!m.active}
                 onEdit={function () { openEdit(m); }}
                 onDelete={function () { setToDelete(m); }}
                 action={
@@ -211,6 +198,7 @@ export default function Menu() {
             <input type="checkbox" checked={form.active} onChange={function (e) { setField('active', e.target.checked); }} className="h-4 w-4 rounded border-sand text-amber" />
             <span className="text-sm font-medium text-ink">Available for ordering</span>
           </label>
+          <p className="text-xs text-muted">If unchecked, customers see this item as Sold out.</p>
 
           {err && <p className="text-sm font-medium text-rose-600">{err}</p>}
         </form>

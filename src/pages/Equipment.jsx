@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { equipment as startEq, branches } from '../data/mock.js';
+import { updateById, removeById, nextId } from '../utils/list.js';
 import StatusBadge from '../components/StatusBadge.jsx';
+import StatCard from '../components/StatCard.jsx';
 import PageCard from '../components/PageCard.jsx';
 import Modal from '../components/Modal.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
@@ -9,11 +11,7 @@ import RowActions from '../components/RowActions.jsx';
 import FormField, { TextInput, SelectInput } from '../components/FormField.jsx';
 
 const statuses = ['online', 'maintenance', 'offline'];
-const branchNames = [];
-for (let i = 0; i < branches.length; i++) {
-  branchNames.push(branches[i].name);
-}
-
+const branchNames = branches.map(function (b) { return b.name; });
 const empty = { name: '', branch: branchNames[0], status: 'online', lastService: '' };
 
 export default function Equipment() {
@@ -25,11 +23,8 @@ export default function Equipment() {
   const [err, setErr] = useState('');
 
   const editing = editId !== null;
-
   const counts = { online: 0, maintenance: 0, offline: 0 };
-  for (let i = 0; i < items.length; i++) {
-    counts[items[i].status]++;
-  }
+  items.forEach(function (e) { counts[e.status]++; });
 
   function setField(key, val) {
     setForm({ ...form, [key]: val });
@@ -71,23 +66,15 @@ export default function Equipment() {
     }
 
     if (editing) {
-      const next = [];
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].id === editId) {
-          next.push({ ...items[i], name: name, branch: form.branch, status: form.status, lastService: lastService });
-        } else {
-          next.push(items[i]);
-        }
-      }
-      setItems(next);
+      setItems(updateById(items, editId, {
+        name: name,
+        branch: form.branch,
+        status: form.status,
+        lastService: lastService,
+      }));
     } else {
-      let maxNum = 0;
-      for (let i = 0; i < items.length; i++) {
-        const num = parseInt(String(items[i].id).replace(/\D/g, ''), 10);
-        if (!isNaN(num) && num > maxNum) maxNum = num;
-      }
       setItems([
-        { id: 'eq-' + (maxNum + 1), name: name, branch: form.branch, status: form.status, lastService: lastService },
+        { id: 'eq-' + nextId(items), name: name, branch: form.branch, status: form.status, lastService: lastService },
         ...items,
       ]);
     }
@@ -96,29 +83,16 @@ export default function Equipment() {
 
   function doDelete() {
     if (!toDelete) return;
-    const next = [];
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].id !== toDelete.id) next.push(items[i]);
-    }
-    setItems(next);
+    setItems(removeById(items, toDelete.id));
     setToDelete(null);
   }
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-sand bg-white p-5 shadow-card">
-          <p className="text-sm text-muted">Online</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-600">{counts.online}</p>
-        </div>
-        <div className="rounded-2xl border border-sand bg-white p-5 shadow-card">
-          <p className="text-sm text-muted">Maintenance</p>
-          <p className="mt-1 text-2xl font-bold text-amber">{counts.maintenance}</p>
-        </div>
-        <div className="rounded-2xl border border-sand bg-white p-5 shadow-card">
-          <p className="text-sm text-muted">Offline</p>
-          <p className="mt-1 text-2xl font-bold text-rose-600">{counts.offline}</p>
-        </div>
+        <StatCard label="Online" value={counts.online} valueClass="text-emerald-600" />
+        <StatCard label="Maintenance" value={counts.maintenance} valueClass="text-amber" />
+        <StatCard label="Offline" value={counts.offline} valueClass="text-rose-600" />
       </div>
 
       <PageCard title="Equipment" subtitle={items.length + ' device(s)'} actions={<Button onClick={openAdd}>+ Add device</Button>}>

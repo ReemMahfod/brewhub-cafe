@@ -9,13 +9,12 @@ import {
 } from 'recharts';
 import { stats, salesByDay, topDrinks, orders, menu } from '../data/mock.js';
 import StatusBadge from '../components/StatusBadge.jsx';
+import StatCard from '../components/StatCard.jsx';
 import PageCard from '../components/PageCard.jsx';
 
 function getImgMap() {
   const map = {};
-  for (let i = 0; i < menu.length; i++) {
-    map[menu[i].name] = menu[i].image;
-  }
+  menu.forEach(function (m) { map[m.name] = m.image; });
   return map;
 }
 
@@ -28,13 +27,13 @@ export default function Overview() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map(function (s) {
           return (
-            <div key={s.id} className="rounded-2xl border border-sand bg-white p-5 shadow-card">
-              <p className="text-sm text-muted">{s.label}</p>
-              <p className="mt-2 text-2xl font-bold text-ink">{s.value}</p>
-              <p className={'mt-1 text-xs font-semibold ' + (s.up ? 'text-emerald-600' : 'text-rose-600')}>
-                {s.delta} vs last week
-              </p>
-            </div>
+            <StatCard
+              key={s.id}
+              label={s.label}
+              value={s.value}
+              hint={s.delta + ' vs last week'}
+              positive={s.up}
+            />
           );
         })}
       </div>

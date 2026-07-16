@@ -22,10 +22,10 @@ const tips = [
     label: 'View branches',
   },
   {
-    title: 'Need help?',
-    text: 'Ask any barista, or check your order after you place it.',
-    to: '/order',
-    label: 'Go to order',
+    title: 'Track your order',
+    text: 'Enter your order or table number to see if it is preparing or ready.',
+    to: '/track',
+    label: 'Track order',
   },
 ];
 

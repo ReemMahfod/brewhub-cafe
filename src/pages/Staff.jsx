@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { staff as startStaff, branches, roleColors } from '../data/mock.js';
+import { updateById, removeById, nextId } from '../utils/list.js';
 import PageCard from '../components/PageCard.jsx';
 import Modal from '../components/Modal.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
@@ -84,22 +85,15 @@ export default function Staff() {
     }
 
     if (editing) {
-      const next = [];
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].id === editId) {
-          next.push({ ...items[i], name: name, role: form.role, branch: form.branch, active: form.active });
-        } else {
-          next.push(items[i]);
-        }
-      }
-      setItems(next);
+      setItems(updateById(items, editId, {
+        name: name,
+        role: form.role,
+        branch: form.branch,
+        active: form.active,
+      }));
     } else {
-      let maxId = 0;
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].id > maxId) maxId = items[i].id;
-      }
       setItems([
-        { id: maxId + 1, name: name, role: form.role, branch: form.branch, active: form.active },
+        { id: nextId(items), name: name, role: form.role, branch: form.branch, active: form.active },
         ...items,
       ]);
     }
@@ -108,11 +102,7 @@ export default function Staff() {
 
   function doDelete() {
     if (!toDelete) return;
-    const next = [];
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].id !== toDelete.id) next.push(items[i]);
-    }
-    setItems(next);
+    setItems(removeById(items, toDelete.id));
     setToDelete(null);
   }
 

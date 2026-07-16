@@ -11,6 +11,7 @@ import {
 import { salesByDay, topDrinks } from '../data/mock.js';
 import { useOrders } from '../context/OrdersContext.jsx';
 import PageCard from '../components/PageCard.jsx';
+import StatCard from '../components/StatCard.jsx';
 
 const colors = ['#6F4E37', '#8B6244', '#A87A55', '#C79A72', '#D97706'];
 
@@ -18,40 +19,27 @@ export default function Analytics() {
   const { orders, dashboardStats } = useOrders();
 
   let weekTotal = 0;
-  for (let i = 0; i < salesByDay.length; i++) {
-    weekTotal = weekTotal + salesByDay[i].value;
-  }
-  const avg = Math.round(weekTotal / salesByDay.length);
-
   let best = salesByDay[0];
-  for (let i = 1; i < salesByDay.length; i++) {
-    if (salesByDay[i].value > best.value) best = salesByDay[i];
-  }
+  salesByDay.forEach(function (d) {
+    weekTotal = weekTotal + d.value;
+    if (d.value > best.value) best = d;
+  });
+  const avg = Math.round(weekTotal / salesByDay.length);
 
   let orderCount = 0;
   let orderRev = 0;
-  for (let i = 0; i < orders.length; i++) {
-    if (orders[i].status !== 'cancelled') {
-      orderCount++;
-      orderRev = orderRev + orders[i].total;
-    }
-  }
+  orders.forEach(function (o) {
+    if (o.status === 'cancelled') return;
+    orderCount++;
+    orderRev = orderRev + o.total;
+  });
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-sand bg-white p-5 shadow-card">
-          <p className="text-sm text-muted">Weekly revenue</p>
-          <p className="mt-1 text-2xl font-bold text-ink">${weekTotal.toLocaleString()}</p>
-        </div>
-        <div className="rounded-2xl border border-sand bg-white p-5 shadow-card">
-          <p className="text-sm text-muted">Orders today</p>
-          <p className="mt-1 text-2xl font-bold text-ink">{dashboardStats.ordersToday}</p>
-        </div>
-        <div className="rounded-2xl border border-sand bg-white p-5 shadow-card">
-          <p className="text-sm text-muted">Sales today</p>
-          <p className="mt-1 text-2xl font-bold text-ink">{dashboardStats.salesTodayFormatted}</p>
-        </div>
+        <StatCard label="Weekly revenue" value={'$' + weekTotal.toLocaleString()} />
+        <StatCard label="Orders today" value={dashboardStats.ordersToday} />
+        <StatCard label="Sales today" value={dashboardStats.salesTodayFormatted} />
       </div>
 
       <PageCard title="Revenue trend" subtitle={'Daily avg $' + avg.toLocaleString() + ' · Best ' + best.day}>

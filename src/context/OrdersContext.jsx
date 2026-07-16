@@ -59,7 +59,7 @@ function loadOrders() {
   return list;
 }
 
-export function minsLeft(readyAtISO) {
+function minsLeft(readyAtISO) {
   if (!readyAtISO) return 0;
   const diff = new Date(readyAtISO).getTime() - Date.now();
   const mins = Math.ceil(diff / 60000);

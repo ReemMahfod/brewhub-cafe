@@ -1,61 +1,73 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { branches } from '../data/mock.js';
 import { useCart } from '../context/CartContext.jsx';
 import { useOrders, getReadyLabel } from '../context/OrdersContext.jsx';
-import { getCustomSummary } from '../utils/drinkCustom.js';
+import { useRatings } from '../context/RatingsContext.jsx';
+import { getCustomSummary, estimateWaitMinutes } from '../utils/drinkCustom.js';
+import { activeOnly } from '../utils/list.js';
 import PublicLayout from '../components/PublicLayout.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import OrderReceiptCard from '../components/OrderReceiptCard.jsx';
+import DrinkRatingPanel from '../components/DrinkRatingPanel.jsx';
+import FormField, { TextInput, SelectInput } from '../components/FormField.jsx';
 
-function getOpenBranches() {
-  const list = [];
-  for (let i = 0; i < branches.length; i++) {
-    if (branches[i].active) list.push(branches[i]);
-  }
-  return list;
+function uniqueDrinks(cartItems) {
+  const seen = {};
+  const out = [];
+  (cartItems || []).forEach(function (it) {
+    if (seen[it.id]) return;
+    seen[it.id] = true;
+    out.push({ id: it.id, name: it.menuName || it.name });
+  });
+  return out;
 }
 
 export default function OrderCheckout() {
   const nav = useNavigate();
   const cart = useCart();
   const { orders, placeOrder } = useOrders();
-  const openBranches = getOpenBranches();
+  const ratings = useRatings();
+  const openBranches = activeOnly(branches);
+
+  const suggestedWait = estimateWaitMinutes(cart.items);
+  const waitChoices = [5, 8, 10, 12, 15, 20, 25];
+  if (waitChoices.indexOf(suggestedWait) === -1) {
+    waitChoices.push(suggestedWait);
+    waitChoices.sort(function (a, b) { return a - b; });
+  }
 
   const [name, setName] = useState('');
   const [table, setTable] = useState('');
   const [branch, setBranch] = useState(openBranches[0] ? openBranches[0].name : '');
-  const [wait, setWait] = useState('10');
+  const [wait, setWait] = useState(String(suggestedWait));
   const [err, setErr] = useState('');
   const [done, setDone] = useState(null);
+  const [myRates, setMyRates] = useState({});
+  const [ratedDone, setRatedDone] = useState(false);
+
+  useEffect(function () {
+    if (!done) setWait(String(estimateWaitMinutes(cart.items)));
+  }, [cart.items, done]);
 
   function submit(e) {
     e.preventDefault();
     setErr('');
+    if (!name.trim()) return setErr('Please enter your name.');
+    if (!table.trim()) return setErr('Please enter your table number.');
+    if (cart.items.length === 0) return setErr('Your cart is empty.');
 
-    if (!name.trim()) {
-      setErr('Please enter your name.');
-      return;
-    }
-    if (!table.trim()) {
-      setErr('Please enter your table number.');
-      return;
-    }
-    if (cart.items.length === 0) {
-      setErr('Your cart is empty.');
-      return;
-    }
-
-    const cartCopy = [];
-    for (let i = 0; i < cart.items.length; i++) {
-      const it = cart.items[i];
-      cartCopy.push({
+    const cartCopy = cart.items.map(function (it) {
+      return {
         cartLineId: it.cartLineId,
         id: it.id,
+        menuName: it.name,
         name: it.displayName || it.name,
         price: it.price,
         qty: it.qty,
         custom: it.custom,
-      });
-    }
+      };
+    });
 
     const order = placeOrder({
       customer: name,
@@ -66,35 +78,43 @@ export default function OrderCheckout() {
     });
 
     cart.clearCart();
+    setMyRates({});
+    setRatedDone(false);
     setDone(order);
+  }
+
+  function rateDrink(menuId, stars) {
+    if (myRates[menuId]) return;
+    ratings.addRating(menuId, stars);
+    setMyRates(function (old) { return { ...old, [menuId]: stars }; });
   }
 
   if (done) {
     return (
       <PublicLayout>
         <div className="mx-auto max-w-lg px-6 py-16 text-center">
-          <h1 className="text-2xl font-bold text-ink">Order sent</h1>
-          <p className="mt-2 text-muted">
-            Thanks {done.customer}. We will bring your order to table {done.tableNumber}.
+          <p className="text-sm font-semibold uppercase tracking-wide text-amber">Order confirmed</p>
+          <h1 className="mt-2 text-3xl font-bold text-ink">We got your order</h1>
+          <p className="mt-3 text-muted">
+            Thanks {done.customer}. Your drinks are coming to table <strong className="text-ink">{done.tableNumber}</strong>.
           </p>
-          <p className="mt-1 text-sm text-muted">Pay at your table when the order arrives.</p>
 
-          <div className="mt-6 rounded-xl border border-sand bg-white p-5 text-left text-sm">
-            <p><strong>Order:</strong> #{done.id}</p>
-            <p className="mt-2"><strong>Table:</strong> {done.tableNumber}</p>
-            <p className="mt-2"><strong>Branch:</strong> {done.branch}</p>
-            <p className="mt-2"><strong>Ready in:</strong> {getReadyLabel(done)}</p>
-            <p className="mt-2"><strong>Total:</strong> ${done.total.toFixed(2)}</p>
-            <p className="mt-2"><strong>Items:</strong> {done.items.join(', ')}</p>
+          <div className="mt-8">
+            <OrderReceiptCard order={done} showPayNote />
           </div>
 
-          <div className="mt-6 flex flex-wrap justify-center gap-4">
-            <Link to="/menu" className="btn-amber">
-              Order more
-            </Link>
-            <Link to="/" className="btn-outline-muted">
-              Home
-            </Link>
+          <DrinkRatingPanel
+            drinks={uniqueDrinks(done.cartItems)}
+            myRates={myRates}
+            onRate={rateDrink}
+            onSkip={function () { setRatedDone(true); }}
+            done={ratedDone}
+          />
+
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link to={'/track?q=' + done.id} className="btn-amber">Track my order</Link>
+            <Link to="/menu" className="btn-outline-muted">Order more</Link>
+            <Link to="/" className="btn-outline-muted">Home</Link>
           </div>
         </div>
       </PublicLayout>
@@ -108,22 +128,26 @@ export default function OrderCheckout() {
         <p className="mt-2 text-muted">Enter your table number and we will bring the drinks.</p>
 
         {cart.items.length === 0 ? (
-          <div className="mt-10">
-            <div className="rounded-xl border border-dashed border-sand bg-white p-10 text-center">
-              <p className="text-muted">Your cart is empty.</p>
-              <Link to="/menu" className="mt-3 inline-block text-sm font-semibold text-amber">
-                Go to menu
-              </Link>
-            </div>
+          <div className="mt-10 space-y-6">
+            <EmptyState
+              text="Your cart is empty."
+              links={[
+                { to: '/menu', label: 'Go to menu', className: 'text-amber' },
+                { to: '/track', label: 'Track an order →', className: 'text-coffee' },
+              ]}
+            />
 
             {orders.length > 0 && (
-              <div className="mt-6 rounded-xl border border-sand bg-white p-5">
+              <div className="rounded-xl border border-sand bg-white p-5">
                 <h2 className="font-bold text-ink">Your recent orders</h2>
                 <ul className="mt-3 space-y-3">
                   {orders.slice(0, 5).map(function (o) {
                     return (
                       <li key={o.id} className="border-b border-sand pb-3 text-sm last:border-0 last:pb-0">
-                        <p className="font-medium text-ink">Order #{o.id} · Table {o.tableNumber}</p>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="font-medium text-ink">Order #{o.id} · Table {o.tableNumber}</p>
+                          <Link to={'/track?q=' + o.id} className="text-xs font-semibold text-amber hover:underline">Track</Link>
+                        </div>
                         <p className="mt-1 text-muted">{o.items.join(', ')}</p>
                         <p className="mt-1 text-amber">${o.total.toFixed(2)} · {getReadyLabel(o)}</p>
                       </li>
@@ -143,68 +167,51 @@ export default function OrderCheckout() {
                     <li key={item.cartLineId} className="flex items-center justify-between gap-3 border-b border-sand pb-3 last:border-0">
                       <div className="min-w-0 flex-1">
                         <p className="font-medium">{item.displayName || item.name}</p>
-                        {item.custom && (
-                          <p className="mt-0.5 text-xs text-muted">{getCustomSummary(item.custom)}</p>
-                        )}
+                        {item.custom && <p className="mt-0.5 text-xs text-muted">{getCustomSummary(item.custom)}</p>}
                         <p className="text-sm text-muted">${item.price.toFixed(2)}</p>
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-sm">
-                        <button type="button" onClick={function () { cart.updateQty(item.cartLineId, item.qty - 1); }} className="rounded-lg border border-sand px-3 py-1.5 font-medium hover:bg-warm">
-                          Less
-                        </button>
+                        <button type="button" onClick={function () { cart.updateQty(item.cartLineId, item.qty - 1); }} className="rounded-lg border border-sand px-3 py-1.5 font-medium hover:bg-warm">Less</button>
                         <span className="min-w-[3rem] text-center font-semibold">Qty {item.qty}</span>
-                        <button type="button" onClick={function () { cart.updateQty(item.cartLineId, item.qty + 1); }} className="rounded-lg border border-sand px-3 py-1.5 font-medium hover:bg-warm">
-                          More
-                        </button>
-                        <button type="button" onClick={function () { cart.removeItem(item.cartLineId); }} className="px-2 py-1.5 font-medium text-rose-500 hover:text-rose-600">
-                          Remove
-                        </button>
+                        <button type="button" onClick={function () { cart.updateQty(item.cartLineId, item.qty + 1); }} className="rounded-lg border border-sand px-3 py-1.5 font-medium hover:bg-warm">More</button>
+                        <button type="button" onClick={function () { cart.removeItem(item.cartLineId); }} className="px-2 py-1.5 font-medium text-rose-500 hover:text-rose-600">Remove</button>
                       </div>
                     </li>
                   );
                 })}
               </ul>
               <p className="mt-4 text-right font-bold text-amber">Total: ${cart.total.toFixed(2)}</p>
-              <p className="mt-1 text-right text-xs text-muted">Payment at table</p>
+              <p className="mt-1 text-right text-xs text-muted">Payment at table · Est. ready ~{suggestedWait} min</p>
             </div>
 
-            <div className="rounded-xl border border-sand bg-white p-5 space-y-4">
-              <div>
-                <label className="mb-1 block text-sm font-medium">Table number *</label>
-                <input type="number" min="1" value={table} onChange={function (e) { setTable(e.target.value); }} placeholder="12" className="h-10 w-full rounded-lg border border-sand px-3" />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">Your name</label>
-                <input value={name} onChange={function (e) { setName(e.target.value); }} placeholder="Sara" className="h-10 w-full rounded-lg border border-sand px-3" />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">Branch</label>
-                <select value={branch} onChange={function (e) { setBranch(e.target.value); }} className="h-10 w-full rounded-lg border border-sand px-3">
+            <div className="space-y-4 rounded-xl border border-sand bg-white p-5">
+              <FormField label="Table number *">
+                <TextInput type="number" min="1" value={table} onChange={function (e) { setTable(e.target.value); }} placeholder="12" />
+              </FormField>
+              <FormField label="Your name">
+                <TextInput value={name} onChange={function (e) { setName(e.target.value); }} placeholder="Sara" />
+              </FormField>
+              <FormField label="Branch">
+                <SelectInput value={branch} onChange={function (e) { setBranch(e.target.value); }}>
                   {openBranches.map(function (b) {
                     return <option key={b.id} value={b.name}>{b.name}</option>;
                   })}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">Ready in</label>
-                <select value={wait} onChange={function (e) { setWait(e.target.value); }} className="h-10 w-full rounded-lg border border-sand px-3">
-                  <option value="5">5 minutes</option>
-                  <option value="10">10 minutes</option>
-                  <option value="15">15 minutes</option>
-                  <option value="20">20 minutes</option>
-                </select>
-              </div>
+                </SelectInput>
+              </FormField>
+              <FormField label={'Ready in (suggested ' + suggestedWait + ' min)'} hint="Based on size, extras, and how many drinks you ordered.">
+                <SelectInput value={wait} onChange={function (e) { setWait(e.target.value); }}>
+                  {waitChoices.map(function (m) {
+                    return <option key={m} value={String(m)}>{m} minutes</option>;
+                  })}
+                </SelectInput>
+              </FormField>
             </div>
 
             {err && <p className="text-sm text-rose-600">{err}</p>}
 
             <div className="flex flex-wrap gap-4">
-              <button type="submit" className="btn-amber">
-                Send order
-              </button>
-              <button type="button" onClick={function () { nav('/menu'); }} className="btn-outline-muted">
-                Add more
-              </button>
+              <button type="submit" className="btn-amber">Send order</button>
+              <button type="button" onClick={function () { nav('/menu'); }} className="btn-outline-muted">Add more</button>
             </div>
           </form>
         )}

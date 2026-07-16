@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { branches as startBranches, branchImages } from '../data/mock.js';
+import { updateById, removeById, nextId } from '../utils/list.js';
 import PageCard from '../components/PageCard.jsx';
 import Modal from '../components/Modal.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
@@ -97,31 +98,19 @@ export default function Branches() {
     }
 
     if (editing) {
-      const next = [];
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].id === editId) {
-          next.push({
-            ...items[i],
-            name: name,
-            address: address,
-            hours: hours,
-            staff: staff,
-            active: form.active,
-            image: form.image.trim() || branchImages.default || items[i].image,
-          });
-        } else {
-          next.push(items[i]);
-        }
-      }
-      setItems(next);
+      const current = items.find(function (b) { return b.id === editId; });
+      setItems(updateById(items, editId, {
+        name: name,
+        address: address,
+        hours: hours,
+        staff: staff,
+        active: form.active,
+        image: form.image.trim() || branchImages.default || (current && current.image),
+      }));
     } else {
-      let maxId = 0;
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].id > maxId) maxId = items[i].id;
-      }
       setItems([
         {
-          id: maxId + 1,
+          id: nextId(items),
           name: name,
           address: address,
           hours: hours,
@@ -137,11 +126,7 @@ export default function Branches() {
 
   function doDelete() {
     if (!toDelete) return;
-    const next = [];
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].id !== toDelete.id) next.push(items[i]);
-    }
-    setItems(next);
+    setItems(removeById(items, toDelete.id));
     setToDelete(null);
   }
 

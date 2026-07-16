@@ -17,52 +17,36 @@ export function CartProvider({ children }) {
       price = finalPrice;
     }
 
-    const line = {
-      cartLineId: cartLineId,
-      menuId: item.id,
-      id: item.id,
-      name: item.name,
-      displayName: displayName,
-      price: price,
-      basePrice: item.price,
-      custom: custom || null,
-      image: item.image,
-      category: item.category,
-      qty: 1,
-    };
-
     setItems(function (old) {
-      let found = null;
-      for (let i = 0; i < old.length; i++) {
-        if (old[i].cartLineId === line.cartLineId) {
-          found = old[i];
-          break;
-        }
-      }
-
+      const found = old.find(function (x) { return x.cartLineId === cartLineId; });
       if (found) {
-        const next = [];
-        for (let i = 0; i < old.length; i++) {
-          if (old[i].cartLineId === line.cartLineId) {
-            next.push({ ...old[i], qty: old[i].qty + 1 });
-          } else {
-            next.push(old[i]);
-          }
-        }
-        return next;
+        return old.map(function (x) {
+          if (x.cartLineId === cartLineId) return { ...x, qty: x.qty + 1 };
+          return x;
+        });
       }
-
-      return [...old, line];
+      return [
+        ...old,
+        {
+          cartLineId,
+          menuId: item.id,
+          id: item.id,
+          name: item.name,
+          displayName,
+          price,
+          basePrice: item.price,
+          custom: custom || null,
+          image: item.image,
+          category: item.category,
+          qty: 1,
+        },
+      ];
     });
   }
 
   function removeItem(cartLineId) {
     setItems(function (old) {
-      const next = [];
-      for (let i = 0; i < old.length; i++) {
-        if (old[i].cartLineId !== cartLineId) next.push(old[i]);
-      }
-      return next;
+      return old.filter(function (x) { return x.cartLineId !== cartLineId; });
     });
   }
 
@@ -72,15 +56,10 @@ export function CartProvider({ children }) {
       return;
     }
     setItems(function (old) {
-      const next = [];
-      for (let i = 0; i < old.length; i++) {
-        if (old[i].cartLineId === cartLineId) {
-          next.push({ ...old[i], qty: qty });
-        } else {
-          next.push(old[i]);
-        }
-      }
-      return next;
+      return old.map(function (x) {
+        if (x.cartLineId === cartLineId) return { ...x, qty: qty };
+        return x;
+      });
     });
   }
 
@@ -90,22 +69,16 @@ export function CartProvider({ children }) {
 
   let total = 0;
   let count = 0;
-  for (let i = 0; i < items.length; i++) {
-    total = total + items[i].price * items[i].qty;
-    count = count + items[i].qty;
-  }
+  items.forEach(function (x) {
+    total += x.price * x.qty;
+    count += x.qty;
+  });
 
-  const val = {
-    items,
-    addItem,
-    removeItem,
-    updateQty,
-    clearCart,
-    total,
-    count,
-  };
-
-  return <CartCtx.Provider value={val}>{children}</CartCtx.Provider>;
+  return (
+    <CartCtx.Provider value={{ items, addItem, removeItem, updateQty, clearCart, total, count }}>
+      {children}
+    </CartCtx.Provider>
+  );
 }
 
 export function useCart() {
